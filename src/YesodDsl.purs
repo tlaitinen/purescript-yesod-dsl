@@ -178,3 +178,5 @@ instance decodeJsonResult :: (DecodeJson record) => DecodeJson (Result record) w
         pure $ Result recs totalCount
 
 
+class ToURIQuery a where
+    toURIQuery :: a -> URIT.Query

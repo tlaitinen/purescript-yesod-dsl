@@ -1,5 +1,5 @@
 module YesodDsl where
-import Prelude (class Show, class Ord, class Eq, show, (<<<), pure, ($), bind, (/=), (++), compare, eq, (<), (+), (*), otherwise, (>), (-), mod, div)
+import Prelude (class Show, class Ord, class Eq, show, (<<<), pure, ($), bind, (/=), (++), compare, eq, (<), (+), (*), otherwise, (>), (-), mod, div, class Functor, (<$>))
 import Data.Argonaut.Combinators ((.?))
 import Data.Argonaut.Encode (class EncodeJson, encodeJson)
 import Data.Argonaut.Decode (class DecodeJson, decodeJson)
@@ -156,6 +156,9 @@ instance encodeJsonKey :: EncodeJson (Key record) where
 
 
 data Result record = Result (Array record) Int
+
+instance functorResult :: Functor Result where
+  map f (Result as b) = Result (f <$> as) b
 
 instance decodeJsonResult :: (DecodeJson record) => DecodeJson (Result record) where
     decodeJson json = do

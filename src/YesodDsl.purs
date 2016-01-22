@@ -1,28 +1,17 @@
 module YesodDsl where
-import Prelude
-import Data.Argonaut.Combinators ((~>), (:=), (.?))
-import Data.Argonaut.Parser (jsonParser)
-import Data.Argonaut.Core (jsonEmptyObject, Json(..))
-import Data.Argonaut.Encode (EncodeJson, encodeJson)
-import Data.Argonaut.Decode (DecodeJson, decodeJson)
+import Prelude (class Show, class Ord, class Eq, show, (<<<), pure, ($), bind, (/=), (++), compare, eq, (<), (+), (*), otherwise, (>), (-), mod, div)
+import Data.Argonaut.Combinators ((.?))
+import Data.Argonaut.Encode (class EncodeJson, encodeJson)
+import Data.Argonaut.Decode (class DecodeJson, decodeJson)
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Generic
+import Data.Generic (class Generic, gCompare, gEq, gShow)
 import Data.Either (Either(..))
-import qualified Data.URI as URI
-import qualified Data.URI.Types as URIT
-import qualified Data.URI.Query as URIQ
+import Data.URI.Types as URIT
 import Data.Array ((!!))
-import qualified Control.Monad.Aff as Aff
-import qualified Network.HTTP.Affjax as Affjax
-import qualified Network.HTTP.RequestHeader as RH
-import Network.HTTP.Method (Method(POST, PUT, DELETE))
-import qualified Network.HTTP.StatusCode as SC
-import qualified Data.String as DS
-import qualified Data.Char as DC
-import qualified Data.Date as DD
-import qualified Data.Time as DT
-import qualified Data.String.Regex as R
-import qualified Data.Int as I
+import Data.String as DS
+import Data.Date as DD
+import Data.String.Regex as R
+import Data.Int as I
     
 foreign import s2nImpl :: (Number -> Maybe Number) -> Maybe Number -> String -> Maybe Number
 
@@ -180,3 +169,15 @@ instance decodeJsonResult :: (DecodeJson record) => DecodeJson (Result record) w
 
 class ToURIQuery a where
     toURIQuery :: a -> URIT.Query
+
+class ToURIQueryValue a where
+    toURIQueryValue :: a -> Maybe String
+
+instance toURIQueryValueShow :: (Show a) => ToURIQueryValue a where
+    toURIQueryValue = Just <<< show 
+
+instance toURIQueryValueMaybe :: (ToURIQueryValue a) => ToURIQueryValue (Maybe a) where
+    toURIQueryValue x = bind x toURIQueryValue
+
+
+

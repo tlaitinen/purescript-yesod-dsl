@@ -12,7 +12,8 @@ import Data.String as DS
 import Data.Date as DD
 import Data.String.Regex as R
 import Data.Int as I
-    
+import Data.StrMap as SM
+
 foreign import s2nImpl :: (Number -> Maybe Number) -> Maybe Number -> String -> Maybe Number
 
 foreign import jsDateToISOString :: DD.JSDate -> String
@@ -170,17 +171,23 @@ instance decodeJsonResult :: (DecodeJson record) => DecodeJson (Result record) w
         pure $ Result recs totalCount
 
 
-class ToURIQuery a where
-    toURIQuery :: a -> URIT.Query
-
 class ToURIQueryValue a where
     toURIQueryValue :: a -> Maybe String
 
 instance toURIQueryValueShow :: (Show a) => ToURIQueryValue a where
     toURIQueryValue = Just <<< show 
 
-instance toURIQueryValueMaybe :: (ToURIQueryValue a) => ToURIQueryValue (Maybe a) where
-    toURIQueryValue x = bind x toURIQueryValue
+insertQueryParam :: forall a. ToURIQueryValue a => String -> a -> URIT.Query -> URIT.Query
+insertQueryParam name value (URIT.Query sm) = URIT.Query $ SM.insert name (toURIQueryValue value) sm
+
+emptyQuery :: URIT.Query
+emptyQuery = URIT.Query SM.empty
+
+paginationQuery :: Maybe Int -> Maybe Int -> URIT.Query
+paginationQuery start limit = ins "start" start $ ins "limit" limit emptyQuery
+    where 
+        ins name (Just v) q  = insertQueryParam name v q
+        ins _ Nothing q = q
 
 
 

@@ -170,6 +170,8 @@ instance decodeJsonResult :: (DecodeJson record) => DecodeJson (Result record) w
 
         pure $ Result recs totalCount
 
+class ToURIQuery a where
+    toURIQuery :: a -> URIT.Query
 
 class ToURIQueryValue a where
     toURIQueryValue :: a -> Maybe String
@@ -182,12 +184,3 @@ insertQueryParam name value (URIT.Query sm) = URIT.Query $ SM.insert name (toURI
 
 emptyQuery :: URIT.Query
 emptyQuery = URIT.Query SM.empty
-
-paginationQuery :: Maybe Int -> Maybe Int -> URIT.Query
-paginationQuery start limit = ins "start" start $ ins "limit" limit emptyQuery
-    where 
-        ins name (Just v) q  = insertQueryParam name v q
-        ins _ Nothing q = q
-
-
-

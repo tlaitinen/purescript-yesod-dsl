@@ -1,19 +1,21 @@
 module YesodDsl where
-import Prelude (class Show, class Ord, class Eq, show, (<<<), pure, ($), bind, (/=), (++), compare, eq, (<), (+), (*), otherwise, (>), (-), mod, div, class Functor, (<$>))
+import Prelude 
 import Data.Argonaut.Combinators ((.?))
 import Data.Argonaut.Encode (class EncodeJson, encodeJson)
 import Data.Argonaut.Decode (class DecodeJson, decodeJson)
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.Generic (class Generic, gCompare, gEq, gShow)
 import Data.Either (Either(..))
 import Data.URI.Types as URIT
 import Data.Array ((!!))
+import Data.List as L
 import Data.String as DS
 import Data.Date as DD
 import Data.String.Regex as R
 import Data.Int as I
 import Data.StrMap as SM
-
+import Data.Tuple (Tuple(..))
+import Control.MonadPlus (guard)
 foreign import s2nImpl :: (Number -> Maybe Number) -> Maybe Number -> String -> Maybe Number
 
 foreign import jsDateToISOString :: DD.JSDate -> String
@@ -181,6 +183,14 @@ instance toURIQueryValueShow :: (Show a) => ToURIQueryValue a where
 
 insertQueryParam :: forall a. ToURIQueryValue a => String -> a -> URIT.Query -> URIT.Query
 insertQueryParam name value (URIT.Query sm) = URIT.Query $ SM.insert name (toURIQueryValue value) sm
+
+dropEmptyQueryParams :: URIT.Query -> URIT.Query 
+dropEmptyQueryParams (URIT.Query sm) = URIT.Query $ SM.fromList $ L.catMaybes $ do
+    Tuple k v <- SM.toList sm
+    guard $ isJust v
+    return $ Just $ Tuple k v
+    
+    
 
 emptyQuery :: URIT.Query
 emptyQuery = URIT.Query SM.empty

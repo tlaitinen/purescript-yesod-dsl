@@ -17,6 +17,7 @@ import Data.Int as I
 import Data.StrMap as SM
 import Data.Tuple (Tuple(..))
 import Control.MonadPlus (guard)
+import qualified Control.Monad.Aff as Aff
 import Network.HTTP.Affjax as A
 import Network.HTTP.RequestHeader as A
 foreign import s2nImpl :: (Number -> Maybe Number) -> Maybe Number -> String -> Maybe Number
@@ -184,7 +185,7 @@ class ToURIQueryValue a where
 instance toURIQueryValueShow :: (Show a) => ToURIQueryValue a where
     toURIQueryValue = Just <<< show 
 
-insertQueryParam :: forall a. ToURIQueryValue a => String -> a -> URIT.Query -> URIT.Query
+insertQueryParam :: ∀ a. ToURIQueryValue a => String -> a -> URIT.Query -> URIT.Query
 insertQueryParam name value (URIT.Query sm) = URIT.Query $ SM.insert name (toURIQueryValue value) sm
 
 dropEmptyQueryParams :: URIT.Query -> URIT.Query 
@@ -200,3 +201,9 @@ emptyQuery = URIT.Query SM.empty
 class YesodDslRequest r o where
     yesodDslRequest       :: A.URL -> Array A.RequestHeader -> r -> A.AffjaxRequest Json
     yesodDslParseResponse :: r -> A.AffjaxResponse Json -> Either String o
+   
+runYesodDslRequest :: ∀ e r o. YesodDslRequest (r o) o => A.URL -> Array A.RequestHeader -> r o -> Aff.Aff (ajax :: A.AJAX | e) (Tuple (Either String o) (A.AffjaxResponse Json))
+runYesodDslRequest baseUrl headers req = do
+    resp <- A.affjax $ yesodDslRequest baseUrl headers req
+    pure $ Tuple (yesodDslParseResponse req resp) resp
+

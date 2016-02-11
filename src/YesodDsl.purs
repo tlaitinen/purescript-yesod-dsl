@@ -190,7 +190,9 @@ dropEmptyQueryParams (URIT.Query sm) = URIT.Query $ SM.fromList $ L.catMaybes $ 
     guard $ isJust v
     return $ Just $ Tuple k v
     
-    
 
 emptyQuery :: URIT.Query
 emptyQuery = URIT.Query SM.empty
+
+class YesodDslRequest a where
+    yesodDslEndpoint :: a -> String

@@ -197,5 +197,6 @@ dropEmptyQueryParams (URIT.Query sm) = URIT.Query $ SM.fromList $ L.catMaybes $ 
 emptyQuery :: URIT.Query
 emptyQuery = URIT.Query SM.empty
 
-class YesodDslRequest a where
-    yesodDslRequest :: A.URL -> Array A.RequestHeader -> a -> A.AffjaxRequest Json
+class YesodDslRequest r o where
+    yesodDslRequest       :: A.URL -> Array A.RequestHeader -> r -> A.AffjaxRequest Json
+    yesodDslParseResponse :: r -> A.AffjaxResponse Json -> Either String o

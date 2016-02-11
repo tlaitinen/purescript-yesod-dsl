@@ -3,6 +3,7 @@ import Prelude
 import Data.Argonaut.Combinators ((.?))
 import Data.Argonaut.Encode (class EncodeJson, encodeJson)
 import Data.Argonaut.Decode (class DecodeJson, decodeJson)
+import Data.Argonaut.Core (Json)
 import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.Generic (class Generic, gCompare, gEq, gShow)
 import Data.Either (Either(..))
@@ -16,6 +17,8 @@ import Data.Int as I
 import Data.StrMap as SM
 import Data.Tuple (Tuple(..))
 import Control.MonadPlus (guard)
+import Network.HTTP.Affjax as A
+import Network.HTTP.RequestHeader as A
 foreign import s2nImpl :: (Number -> Maybe Number) -> Maybe Number -> String -> Maybe Number
 
 foreign import jsDateToISOString :: DD.JSDate -> String
@@ -195,4 +198,4 @@ emptyQuery :: URIT.Query
 emptyQuery = URIT.Query SM.empty
 
 class YesodDslRequest a where
-    yesodDslEndpoint :: a -> String
+    yesodDslRequest :: A.URL -> Array A.RequestHeader -> a -> A.AffjaxRequest Json

@@ -20,6 +20,8 @@ import Control.MonadPlus (guard)
 import qualified Control.Monad.Aff as Aff
 import Network.HTTP.Affjax as A
 import Network.HTTP.RequestHeader as A
+import Data.BigInt as BI
+import Control.Alt ((<|>))
 foreign import s2nImpl :: (Number -> Maybe Number) -> Maybe Number -> String -> Maybe Number
 
 foreign import jsDateToISOString :: DD.JSDate -> String
@@ -138,6 +140,23 @@ instance decodeJsonUTCTime :: DecodeJson UTCTime where
             
 instance encodeJsonUTCTime :: EncodeJson UTCTime where
     encodeJson (UTCTime d) = encodeJson $ jsDateToISOString $ DD.toJSDate d
+
+newtype BigIntP = BigIntP BI.BigInt
+
+instance decodeJsonBigIntP :: DecodeJson BigIntP where
+    decodeJson json = (do
+            x <- decodeJson json
+            case BI.fromString x of
+                Just i -> pure $ BigIntP i
+                Nothing -> Left $ "Invalid bigInt: " ++ x)
+        <|> (do
+            x <- decodeJson json
+            pure $ BigIntP $ BI.fromInt x)
+
+instance encodeJsonBigIntP :: EncodeJson BigIntP where
+    encodeJson (BigIntP i) = encodeJson $ BI.toString i
+
+
 
 data Key record = Key Number
 

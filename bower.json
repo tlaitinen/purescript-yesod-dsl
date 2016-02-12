@@ -17,6 +17,7 @@
     "purescript-affjax": "~0.10.1",
     "purescript-datetime": "~0.9.1",
     "purescript-lens": "~0.9.1",
-    "purescript-bigints": "^0.2.1"
+    "purescript-bigints": "^0.2.1",
+    "purescript-prelude": "^0.1.4"
   }
 }

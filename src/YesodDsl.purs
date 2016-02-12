@@ -3,7 +3,7 @@ import Prelude
 import Data.Argonaut.Combinators ((.?))
 import Data.Argonaut.Encode (class EncodeJson, encodeJson)
 import Data.Argonaut.Decode (class DecodeJson, decodeJson)
-import Data.Argonaut.Core (Json)
+import Data.Argonaut.Core (Json, isNull)
 import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.Generic (class Generic, gCompare, gEq, gShow)
 import Data.Either (Either(..))
@@ -182,8 +182,9 @@ class ToURIQuery a where
 class ToURIQueryValue a where
     toURIQueryValue :: a -> Maybe String
 
-instance toURIQueryValueShow :: (Show a) => ToURIQueryValue a where
-    toURIQueryValue = Just <<< show 
+instance toURIQueryValueEncodeJson :: (EncodeJson a) => ToURIQueryValue a where
+    toURIQueryValue x = let v = encodeJson x in if isNull v then Nothing else Just $ show v
+        
 
 insertQueryParam :: ∀ a. ToURIQueryValue a => String -> a -> URIT.Query -> URIT.Query
 insertQueryParam name value (URIT.Query sm) = URIT.Query $ SM.insert name (toURIQueryValue value) sm
@@ -198,11 +199,11 @@ dropEmptyQueryParams (URIT.Query sm) = URIT.Query $ SM.fromList $ L.catMaybes $ 
 emptyQuery :: URIT.Query
 emptyQuery = URIT.Query SM.empty
 
-class YesodDslRequest r o where
-    yesodDslRequest       :: A.URL -> Array A.RequestHeader -> r -> A.AffjaxRequest Json
-    yesodDslParseResponse :: r -> A.AffjaxResponse Json -> Either String o
+class YesodDslRequest (r :: * -> *) o where
+    yesodDslRequest       :: A.URL -> Array A.RequestHeader -> r o -> A.AffjaxRequest Json
+    yesodDslParseResponse :: r o -> A.AffjaxResponse Json -> Either String o
    
-runYesodDslRequest :: ∀ e r o. YesodDslRequest (r o) o => A.URL -> Array A.RequestHeader -> r o -> Aff.Aff (ajax :: A.AJAX | e) (Tuple (Either String o) (A.AffjaxResponse Json))
+runYesodDslRequest :: ∀ e r o. YesodDslRequest r o => A.URL -> Array A.RequestHeader -> r o -> Aff.Aff (ajax :: A.AJAX | e) (Tuple (Either String o) (A.AffjaxResponse Json))
 runYesodDslRequest baseUrl headers req = do
     resp <- A.affjax $ yesodDslRequest baseUrl headers req
     pure $ Tuple (yesodDslParseResponse req resp) resp

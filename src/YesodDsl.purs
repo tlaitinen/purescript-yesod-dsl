@@ -3,7 +3,7 @@ import Prelude
 import Data.Argonaut.Combinators ((.?))
 import Data.Argonaut.Encode (class EncodeJson, encodeJson)
 import Data.Argonaut.Decode (class DecodeJson, decodeJson)
-import Data.Argonaut.Core (Json, isNull)
+import Data.Argonaut.Core (Json, isNull, foldJsonObject)
 import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.Generic (class Generic, gCompare, gEq, gShow)
 import Data.Either (Either(..))
@@ -198,25 +198,13 @@ instance decodeJsonResult :: (DecodeJson record) => DecodeJson (Result record) w
 class ToURIQuery a where
     toURIQuery :: a -> URIT.Query
 
-class ToURIQueryValue a where
-    toURIQueryValue :: a -> Maybe String
-
-instance toURIQueryValueEncodeJson :: (EncodeJson a) => ToURIQueryValue a where
-    toURIQueryValue x = let v = encodeJson x in if isNull v then Nothing else Just $ show v
-        
-
-insertQueryParam :: ∀ a. ToURIQueryValue a => String -> a -> URIT.Query -> URIT.Query
-insertQueryParam name value (URIT.Query sm) = URIT.Query $ SM.insert name (toURIQueryValue value) sm
-
-dropEmptyQueryParams :: URIT.Query -> URIT.Query 
-dropEmptyQueryParams (URIT.Query sm) = URIT.Query $ SM.fromList $ L.catMaybes $ do
-    Tuple k v <- SM.toList sm
-    guard $ isJust v
-    return $ Just $ Tuple k v
-    
-
-emptyQuery :: URIT.Query
-emptyQuery = URIT.Query SM.empty
+instance toURIQueryEncodeJson :: (EncodeJson a) => ToURIQuery a where
+    toURIQuery = URIT.Query <<< SM.fromList <<< (foldJsonObject L.Nil f) <<< encodeJson
+        where
+            f o = do
+                Tuple k v <- SM.toList o
+                guard $ not $ isNull v
+                return $ Tuple k (Just $ show v)
 
 class YesodDslRequest (r :: * -> *) o where
     yesodDslRequest       :: A.URL -> Array A.RequestHeader -> r o -> A.AffjaxRequest Json

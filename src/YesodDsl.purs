@@ -1,9 +1,9 @@
 module YesodDsl where
 import Prelude 
-import Data.Argonaut.Combinators ((.?))
 import Data.Argonaut.Encode (class EncodeJson, encodeJson)
 import Data.Argonaut.Decode (class DecodeJson, decodeJson)
-import Data.Argonaut.Core (Json, isNull, foldJsonObject)
+import Data.Argonaut.Core (Json, isNull, foldJsonObject, jsonEmptyObject)
+import Data.Argonaut.Combinators ((~>), (:=), (.?))
 import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.Generic (class Generic, gCompare, gEq, gShow)
 import Data.Either (Either(..))
@@ -205,6 +205,21 @@ instance toURIQueryEncodeJson :: (EncodeJson a) => ToURIQuery a where
                 Tuple k v <- SM.toList o
                 guard $ not $ isNull v
                 return $ Tuple k (Just $ show v)
+
+data SortDir = Asc | Desc
+
+instance encodeJsonSortDir :: EncodeJson SortDir where
+    encodeJson sd = encodeJson $ case sd of
+        Asc -> "ASC"
+        Desc -> "DESC"        
+
+data SortField a = SortField a SortDir
+
+instance encodeJsonSortField :: (EncodeJson a) => EncodeJson (SortField a) where
+    encodeJson (SortField f sd) = do
+        "field" := f
+        ~> "direction" := sd
+        ~> jsonEmptyObject
 
 class YesodDslRequest (r :: * -> *) o where
     yesodDslRequest       :: A.URL -> Array A.RequestHeader -> r o -> A.AffjaxRequest Json

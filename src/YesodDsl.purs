@@ -221,6 +221,29 @@ instance encodeJsonSortField :: (EncodeJson a) => EncodeJson (SortField a) where
         ~> "direction" := sd
         ~> jsonEmptyObject
 
+data FilterOp = Like | Ilike | Is | IsNot | Eq | Neq | Lt | Gt | Le | Ge
+
+derive instance genericFilterOp :: Generic FilterOp
+
+instance eqFilterOp :: Eq FilterOp where
+    eq = gEq
+
+instance ordFilterOp :: Ord FilterOp where
+    compare = gCompare
+
+instance encodeJsonFilterOp :: EncodeJson FilterOp where
+    encodeJson op = encodeJson $ case op of
+        Like -> "like"
+        Ilike -> "ilike"
+        Is -> "is"
+        IsNot -> "is not"
+        Eq -> "eq"
+        Neq -> "neq"
+        Lt -> "lt"
+        Gt -> "gt"
+        Le -> "le"
+        Ge -> "ge"
+
 class YesodDslRequest (r :: * -> *) o where
     yesodDslRequest       :: A.URL -> Array A.RequestHeader -> r o -> A.AffjaxRequest Json
     yesodDslParseResponse :: r o -> A.AffjaxResponse Json -> Either String o

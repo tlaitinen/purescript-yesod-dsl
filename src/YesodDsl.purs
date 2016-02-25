@@ -244,6 +244,20 @@ instance encodeJsonFilterOp :: EncodeJson FilterOp where
         Le -> "le"
         Ge -> "ge"
 
+class YesodDslFilter a where
+    yesodDslFilterField :: a -> String
+    yesodDslFilterOp    :: a -> FilterOp
+    yesodDslFilterValue :: a -> Json
+
+newtype YesodDslFilterP a = YesodDslFilterP a
+
+instance encodeJsonYesodDslFilterP :: (YesodDslFilter a) => EncodeJson (YesodDslFilterP a) where
+    encodeJson (YesodDslFilterP f) = do
+        "field"         := yesodDslFilterField f
+        ~> "comparison" := yesodDslFilterOp f
+        ~> "value"      := yesodDslFilterValue f
+        ~> jsonEmptyObject
+
 class YesodDslRequest (r :: * -> *) o where
     yesodDslRequest       :: A.URL -> Array A.RequestHeader -> r o -> A.AffjaxRequest Json
     yesodDslParseResponse :: r o -> A.AffjaxResponse Json -> Either String o

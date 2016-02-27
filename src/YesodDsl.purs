@@ -134,7 +134,7 @@ instance ordUTCTime :: Ord UTCTime where
 instance decodeJsonUTCTime :: DecodeJson UTCTime where
     decodeJson json = do
         x <- decodeJson json
-        case DD.fromStringStrict x of
+        case DD.fromString x of
             Just d -> pure $ UTCTime d
             Nothing -> Left $ "Invalid UTCTime: " ++ x
             
